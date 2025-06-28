@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { CvParserModule } from './modules/cv-parser/cv-parser.module';
+
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [CvParserModule, ConfigModule.forRoot({isGlobal:true})],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
