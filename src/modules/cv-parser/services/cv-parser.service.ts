@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as admin from 'firebase-admin'; // Importa firebase-admin para usar FieldValue.serverTimestamp()
-import { FirebaseService } from 'src/firebase/firebase.service'; // Asegúrate que la ruta sea correcta
+import * as admin from 'firebase-admin'; 
+import { FirebaseService } from 'src/firebase/firebase.service'; 
 
 
 @Injectable()
@@ -65,26 +65,24 @@ export class CvService {
       const pdfFile = fs.readFileSync(path.resolve(filePath));
       const base64Data = pdfFile.toString('base64');
 
-      // Configurar el documento para Gemini (esto está bien)
+      // Configurar el documento para Gemini
       const document = {
         mimeType: 'application/pdf',
         data: base64Data
       };
 
-      // Prompt para extracción (esto está bien)
+      
       const prompt = "Procesa el CV y devuelve SOLO el JSON con los datos solicitados";
 
-      // --- ¡La corrección está aquí! ---
+      
       const result = await this.model.generateContent([
-        { text: prompt },        // El prompt es una parte de texto
-        { inlineData: document } // El documento es una parte de inlineData
+        { text: prompt },        
+        { inlineData: document } 
       ]);
-      // --- Fin de la corrección ---
 
       const response = result.response;
       const text = response.text();
 
-      // Limpiar respuesta y convertir a JSON
       const jsonStart = text.indexOf('{');
       const jsonEnd = text.lastIndexOf('}') + 1;
       const jsonString = text.substring(jsonStart, jsonEnd);
@@ -97,23 +95,22 @@ export class CvService {
         throw new Error('Could not parse JSON from CV analysis. Invalid format received from AI.');
       }
 
-       const collectionName = 'parsed_cvs'; // Puedes elegir el nombre de tu colección
+       const collectionName = 'parsed_cvs'; 
       const docRef = await this.firebaseService.db.collection(collectionName).add({
         ...parsedCvData,
-        processedAt: admin.firestore.FieldValue.serverTimestamp(), // Añade un timestamp
-        originalFileName: path.basename(filePath) // Opcional: guardar el nombre original del archivo
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        originalFileName: path.basename(filePath)
       });
       console.log(`Datos del CV guardados en Firestore con ID: ${docRef.id} en la colección ${collectionName}`);
       
       return {
-        firebaseDocId: docRef.id, // Devuelve el ID del documento de Firebase
-        data: parsedCvData // Y los datos parseados
+        firebaseDocId: docRef.id, 
+        data: parsedCvData 
       };
     } catch (error) {
       console.error('Error procesando CV:', error);
       throw new Error('Error al procesar el CV');
     } finally {
-      // Eliminar archivo temporal
       fs.unlinkSync(filePath);
     }
   }
@@ -159,16 +156,13 @@ export class CvService {
         throw new NotFoundException(`Parsed CV with ID ${id} not found.`);
       }
 
-      // Realiza la actualización de los campos proporcionados
       await cvRef.update(updateData);
 
-      // Opcional: Recupera el documento completo actualizado para devolverlo
       const updatedDoc = await cvRef.get();
       return { id: updatedDoc.id, ...updatedDoc.data() };
 
     } catch (error) {
       console.error(`Error updating parsed CV with ID ${id} in Firestore:`, error);
-      // Si ya es un NotFoundException, relánzalo
       if (error instanceof NotFoundException) {
           throw error;
       }
