@@ -2,33 +2,17 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as path from 'path';
+import { firestore } from '../config/firebase'; 
 
 @Injectable()
 export class FirebaseService implements OnModuleInit, OnModuleDestroy {
   private _db: admin.firestore.Firestore;
-  private firebaseApp: admin.app.App;
+  //private firebaseApp: admin.app.App;
 
   onModuleInit() {
     try {
-      // Intenta obtener la ruta al archivo de la clave de servicio desde las variables de entorno
-      const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
-
-      if (!serviceAccountPath) {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY_PATH environment variable is not set. Please provide the path to your Firebase service account key JSON file.');
-      }
-
-      // Asegúrate de que la ruta sea absoluta para `require`
-      const absoluteServiceAccountPath = path.resolve(serviceAccountPath);
-
-      // Carga el contenido del archivo de la clave de servicio
-      const serviceAccount = require(absoluteServiceAccountPath);
-
-      // Inicializa el SDK de Firebase Admin
-      this.firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-
-      this._db = admin.firestore();
+      
+      this._db = firestore;
       console.log('Firebase Admin SDK initialized successfully.');
 
     } catch (error) {

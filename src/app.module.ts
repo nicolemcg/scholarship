@@ -8,15 +8,10 @@ import { CvParserModule } from './modules/cv-parser/cv-parser.module';
 import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
-  imports: [
-    RecommenderModule
-  ],
   controllers: [AppController],
   providers: [AppService],
-  imports: [CvParserModule, ConfigModule.forRoot({ // <-- Add this line
+  imports: [CvParserModule,RecommenderModule, ConfigModule.forRoot({ // <-- Add this line
       isGlobal: true, // Makes the ConfigService available globally
     }),FirebaseModule,],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
