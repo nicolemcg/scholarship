@@ -27,6 +27,8 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+src/config/firebase-admin.json
+scolarships-bolivia-firebase-adminsdk-fbsvc-0b19e0a995.json
 
 # IDE - VSCode
 .vscode/*
