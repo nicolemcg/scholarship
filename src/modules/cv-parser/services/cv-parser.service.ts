@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,6 +10,7 @@ import { FirebaseService } from 'src/firebase/firebase.service'; // Asegúrate q
 export class CvService {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
+  private readonly collectionName = 'parsed_cvs';
 
   constructor(
     private readonly firebaseService: FirebaseService,
@@ -92,7 +93,7 @@ export class CvService {
         console.error('Raw Gemini text response (for debug):', text);
         throw new Error('Could not parse JSON from CV analysis. Invalid format received from AI.');
       }
-      
+
        const collectionName = 'parsed_cvs'; // Puedes elegir el nombre de tu colección
       const docRef = await this.firebaseService.db.collection(collectionName).add({
         ...parsedCvData,
@@ -111,6 +112,64 @@ export class CvService {
     } finally {
       // Eliminar archivo temporal
       fs.unlinkSync(filePath);
+    }
+  }
+
+  async findAllParsedCvs(): Promise<any[]> {
+    try {
+      const snapshot = await this.firebaseService.db.collection(this.collectionName).get();
+      const cvs: any[] = [];
+      snapshot.forEach(doc => {
+        // Asegúrate de incluir el ID del documento
+        cvs.push({ id: doc.id, ...doc.data() });
+      });
+      return cvs;
+    } catch (error) {
+      console.error('Error fetching all parsed CVs from Firestore:', error);
+      throw new Error('Failed to retrieve parsed CVs.');
+    }
+  }
+
+  async findParsedCvById(id: string): Promise<any> {
+    try {
+      const doc = await this.firebaseService.db.collection(this.collectionName).doc(id).get();
+      if (!doc.exists) {
+        throw new NotFoundException(`Parsed CV with ID ${id} not found.`);
+      }
+      return { id: doc.id, ...doc.data() };
+    } catch (error) {
+      console.error(`Error fetching parsed CV with ID ${id} from Firestore:`, error);
+      // Si el error ya es un NotFoundException, relánzalo
+      if (error instanceof NotFoundException) {
+          throw error;
+      }
+      throw new Error('Failed to retrieve parsed CV by ID.');
+    }
+  }
+
+  async updateParsedCv(id: string, updateData: any): Promise<any> {
+    try {
+      const cvRef = this.firebaseService.db.collection(this.collectionName).doc(id);
+      const doc = await cvRef.get();
+
+      if (!doc.exists) {
+        throw new NotFoundException(`Parsed CV with ID ${id} not found.`);
+      }
+
+      // Realiza la actualización de los campos proporcionados
+      await cvRef.update(updateData);
+
+      // Opcional: Recupera el documento completo actualizado para devolverlo
+      const updatedDoc = await cvRef.get();
+      return { id: updatedDoc.id, ...updatedDoc.data() };
+
+    } catch (error) {
+      console.error(`Error updating parsed CV with ID ${id} in Firestore:`, error);
+      // Si ya es un NotFoundException, relánzalo
+      if (error instanceof NotFoundException) {
+          throw error;
+      }
+      throw new Error('Failed to update parsed CV.');
     }
   }
 }
