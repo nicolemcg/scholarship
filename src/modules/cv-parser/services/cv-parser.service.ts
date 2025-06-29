@@ -2,13 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as admin from 'firebase-admin'; // Importa firebase-admin para usar FieldValue.serverTimestamp()
+import { FirebaseService } from 'src/firebase/firebase.service'; // Asegúrate que la ruta sea correcta
+
 
 @Injectable()
 export class CvService {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
 
-  constructor() {
+  constructor(
+    private readonly firebaseService: FirebaseService,
+  ) {
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiApiKey) {
@@ -19,7 +24,9 @@ export class CvService {
       model: "gemini-2.5-flash",
       systemInstruction: `
         Eres un experto en reclutamiento analizando CVs para postulaciones de becas. 
-        Extrae SOLAMENTE los siguientes datos en formato JSON:
+        Tu única tarea es extraer los siguientes datos en formato JSON.
+        ES CRUCIAL que la salida sea un OBJETO JSON VÁLIDO y ESTRICTO, sin comas extra o errores de sintaxis.
+        NO incluyas ningún otro texto o explicación, SOLO el objeto JSON.
         {
           "nombre_completo": string,
           "edad": number | null,
@@ -47,25 +54,29 @@ export class CvService {
   }
 
   async processCV(filePath: string): Promise<any> {
+    let parsedCvData: any;
+
     try {
       // Leer el archivo PDF
       const pdfFile = fs.readFileSync(path.resolve(filePath));
       const base64Data = pdfFile.toString('base64');
 
-      // Configurar el documento para Gemini
+      // Configurar el documento para Gemini (esto está bien)
       const document = {
         mimeType: 'application/pdf',
         data: base64Data
       };
 
-      // Prompt para extracción
+      // Prompt para extracción (esto está bien)
       const prompt = "Procesa el CV y devuelve SOLO el JSON con los datos solicitados";
 
-      // Enviar a Gemini
+      // --- ¡La corrección está aquí! ---
       const result = await this.model.generateContent([
-        { text: prompt }, // El prompt como una parte de texto
-        { inlineData: document } // Tu objeto de documento PDF como inlineData
+        { text: prompt },        // El prompt es una parte de texto
+        { inlineData: document } // El documento es una parte de inlineData
       ]);
+      // --- Fin de la corrección ---
+
       const response = result.response;
       const text = response.text();
 
@@ -75,12 +86,25 @@ export class CvService {
       const jsonString = text.substring(jsonStart, jsonEnd);
 
       try {
-        return JSON.parse(jsonString);
+        parsedCvData = JSON.parse(jsonString);
       } catch (parseError) {
         console.error('Error parsing JSON from Gemini response:', parseError);
         console.error('Raw Gemini text response (for debug):', text);
         throw new Error('Could not parse JSON from CV analysis. Invalid format received from AI.');
       }
+      
+       const collectionName = 'parsed_cvs'; // Puedes elegir el nombre de tu colección
+      const docRef = await this.firebaseService.db.collection(collectionName).add({
+        ...parsedCvData,
+        processedAt: admin.firestore.FieldValue.serverTimestamp(), // Añade un timestamp
+        originalFileName: path.basename(filePath) // Opcional: guardar el nombre original del archivo
+      });
+      console.log(`Datos del CV guardados en Firestore con ID: ${docRef.id} en la colección ${collectionName}`);
+      
+      return {
+        firebaseDocId: docRef.id, // Devuelve el ID del documento de Firebase
+        data: parsedCvData // Y los datos parseados
+      };
     } catch (error) {
       console.error('Error procesando CV:', error);
       throw new Error('Error al procesar el CV');
