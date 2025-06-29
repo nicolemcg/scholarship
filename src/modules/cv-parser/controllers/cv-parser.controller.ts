@@ -13,7 +13,7 @@ export class CvController {
     return this.cvService.findAllParsedCvs();
   }
 
-  @Get(':id') // Endpoint para obtener un CV por su ID: GET /parsed-cvs/:id
+  @Get(':id') 
   async getParsedCvById(@Param('id') id: string): Promise<any> {
     return this.cvService.findParsedCvById(id);
   }
@@ -44,10 +44,10 @@ export class CvController {
     return this.cvService.processCV(file.path);
   }
 
-  @Put(':id') // Endpoint para actualizar un CV: PUT /parsed-cvs/:id
+  @Put(':id')
   async updateParsedCv(
     @Param('id') id: string,
-    @Body() updateData: any // El cuerpo de la solicitud contendrá los datos a actualizar
+    @Body() updateData: any 
   ): Promise<any> {
     return this.cvService.updateParsedCv(id, updateData);
   }

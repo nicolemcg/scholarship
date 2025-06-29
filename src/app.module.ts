@@ -10,8 +10,8 @@ import { FirebaseModule } from './firebase/firebase.module';
 @Module({
   controllers: [AppController],
   providers: [AppService],
-  imports: [CvParserModule,RecommenderModule, ConfigModule.forRoot({ // <-- Add this line
-      isGlobal: true, // Makes the ConfigService available globally
+  imports: [CvParserModule,RecommenderModule, ConfigModule.forRoot({
+      isGlobal: true, 
     }),FirebaseModule,],
 })
 export class AppModule {}
