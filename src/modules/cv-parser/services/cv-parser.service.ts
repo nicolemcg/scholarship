@@ -28,6 +28,8 @@ export class CvService {
         Tu única tarea es extraer los siguientes datos en formato JSON.
         ES CRUCIAL que la salida sea un OBJETO JSON VÁLIDO y ESTRICTO, sin comas extra o errores de sintaxis.
         NO incluyas ningún otro texto o explicación, SOLO el objeto JSON.
+        
+        El formato DEBE ser exactamente:
         {
           "nombre_completo": string,
           "edad": number | null,
@@ -36,12 +38,12 @@ export class CvService {
           "contacto": string | null,
           "ubicacion": string,
           "carrera": string,
-          "experiencia_laboral": {empresa: string, puesto: string, periodo: string}[],
+          "experiencia_laboral": [{empresa: string, puesto: string, periodo: string}, {empresa: string, puesto: string, periodo: string}], // <-- Explicit example here!
           "sexo": "Masculino" | "Femenino" | "Otro" | "No especificado",
-          "estudios_postgrado": {institucion: string, titulo: string}[],
-          "voluntariados": {organizacion: string, rol: string}[],
+          "estudios_postgrado": [{institucion: string, titulo: string}],
+          "voluntariados": [{organizacion: string, rol: string}],
           "skills": string[],
-          "idiomas": {idioma: string, nivel: string}[]
+          "idiomas": [{idioma: string, nivel: string}]
         }
         
         Reglas:
@@ -50,6 +52,7 @@ export class CvService {
         3. Contacto puede incluir teléfono o alternativas
         4. Sexo solo si está EXPLÍCITAMENTE mencionado
         5. Usa EXACTAMENTE estos nombres de campos
+        6. Asegúrate de que TODAS las claves y cadenas de texto en el JSON estén entre comillas dobles.
       `
     });
   }
