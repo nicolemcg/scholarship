@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { CvParserModule } from './modules/cv-parser/cv-parser.module';
 
-import { ConfigModule } from '@nestjs/config';
+//import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
-  imports: [CvParserModule, ConfigModule.forRoot({isGlobal:true})],
+  imports: [CvParserModule, ConfigModule.forRoot({ // <-- Add this line
+      isGlobal: true, // Makes the ConfigService available globally
+    }),],
   controllers: [],
   providers: [],
 })

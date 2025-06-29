@@ -19,7 +19,8 @@ export class CvService {
       model: "gemini-2.5-flash",
       systemInstruction: `
         Eres un experto en reclutamiento analizando CVs para postulaciones de becas. 
-        Extrae SOLAMENTE los siguientes datos en formato JSON:
+        Tu única tarea es extraer los siguientes datos en formato JSON.
+        NO incluyas ningún otro texto o explicación, SOLO el objeto JSON.
         {
           "nombre_completo": string,
           "edad": number | null,
@@ -52,20 +53,22 @@ export class CvService {
       const pdfFile = fs.readFileSync(path.resolve(filePath));
       const base64Data = pdfFile.toString('base64');
 
-      // Configurar el documento para Gemini
+      // Configurar el documento para Gemini (esto está bien)
       const document = {
         mimeType: 'application/pdf',
         data: base64Data
       };
 
-      // Prompt para extracción
+      // Prompt para extracción (esto está bien)
       const prompt = "Procesa el CV y devuelve SOLO el JSON con los datos solicitados";
 
-      // Enviar a Gemini
+      // --- ¡La corrección está aquí! ---
       const result = await this.model.generateContent([
-        { text: prompt }, // El prompt como una parte de texto
-        { inlineData: document } // Tu objeto de documento PDF como inlineData
+        { text: prompt },        // El prompt es una parte de texto
+        { inlineData: document } // El documento es una parte de inlineData
       ]);
+      // --- Fin de la corrección ---
+
       const response = result.response;
       const text = response.text();
 
