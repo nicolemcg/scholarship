@@ -27,6 +27,7 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+src/config/firebase-admin.json
 
 # IDE - VSCode
 .vscode/*
