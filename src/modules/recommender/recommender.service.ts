@@ -12,31 +12,40 @@ import { getEmbedding } from './utils/embedding-helper';
 @Injectable()
 export class RecommenderService {
   async recommendScholarships(userId: string): Promise<any[]> {
-    const profile = await this.getUserProfile(userId);
-    const profileText = buildProfileText(profile);
-    const profileEmbedding = await getEmbedding(profileText);
-    const scholarships = await this.getScholarships();
+  const profile = await this.getUserProfile(userId);
+  const profileText = buildProfileText(profile);
+  const profileEmbedding = await getEmbedding(profileText);
+  const scholarships = await this.getScholarships();
 
-    const results = scholarships.map((scholarship) => {
-      const similarity = cosineSimilarity(profileEmbedding, scholarship.embedding);
-      const rulesScore = calculateRulesScore(profile, scholarship);
-      const urgencyScore = this.calculateUrgency(scholarship.deadline);
-      const impactScore = this.scoreImpact(scholarship);
+  const results = scholarships.map((scholarship) => {
+    const similarity = cosineSimilarity(profileEmbedding, scholarship.embedding);
+    const rulesScore = calculateRulesScore(profile, scholarship);
+    const urgencyScore = this.calculateUrgency(scholarship.deadline);
+    const impactScore = this.scoreImpact(scholarship);
 
-      const finalScore = calculateFinalScore({ semanticSimilarity: similarity, rulesScore, urgencyScore, impactScore });
+    const finalScore = calculateFinalScore({ semanticSimilarity: similarity, rulesScore, urgencyScore, impactScore });
 
-      return {
-        ...scholarship,
-        similarity,
-        rulesScore,
-        urgencyScore,
-        impactScore,
-        finalScore
-      };
-    });
+    return {
+      id: scholarship.id,
+      title: scholarship.title,
+      destination_country: scholarship.destination_country,
+      modality: scholarship.modality,
+      duration: scholarship.duration,
+      deadline: scholarship.deadline,
+      scholarship_type: scholarship.scholarship_type,
+      benefits: scholarship.benefits,
+      similarity: Number(similarity.toFixed(4)),
+      rulesScore: Number(rulesScore.toFixed(4)),
+      urgencyScore: Number(urgencyScore.toFixed(4)),
+      impactScore: Number(impactScore.toFixed(4)),
+      finalScore: Number(finalScore.toFixed(4)),
+      application_link: scholarship.application_link,
+    };
+  });
 
-    return results.sort((a, b) => b.finalScore - a.finalScore).slice(0, 10);
-  }
+  return results.sort((a, b) => b.finalScore - a.finalScore).slice(0, 10);
+}
+
 
   private async getUserProfile(userId: string) {
     const doc = await firestore.collection('users').doc(userId).get();
