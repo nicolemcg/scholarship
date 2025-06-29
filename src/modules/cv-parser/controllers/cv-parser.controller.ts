@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller,Get, Param, Post, UseInterceptors, UploadedFile, Put, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CvService } from '../services/cv-parser.service';
 import { diskStorage } from 'multer';
@@ -7,6 +7,16 @@ import { extname } from 'path';
 @Controller('cv')
 export class CvController {
   constructor(private readonly cvService: CvService) {}
+
+  @Get()
+  async getAllParsedCvs(): Promise<any[]> {
+    return this.cvService.findAllParsedCvs();
+  }
+
+  @Get(':id') // Endpoint para obtener un CV por su ID: GET /parsed-cvs/:id
+  async getParsedCvById(@Param('id') id: string): Promise<any> {
+    return this.cvService.findParsedCvById(id);
+  }
 
   @Post('extract')
   @UseInterceptors(
@@ -32,5 +42,13 @@ export class CvController {
   )
   async uploadCv(@UploadedFile() file: Express.Multer.File) {
     return this.cvService.processCV(file.path);
+  }
+
+  @Put(':id') // Endpoint para actualizar un CV: PUT /parsed-cvs/:id
+  async updateParsedCv(
+    @Param('id') id: string,
+    @Body() updateData: any // El cuerpo de la solicitud contendrá los datos a actualizar
+  ): Promise<any> {
+    return this.cvService.updateParsedCv(id, updateData);
   }
 }

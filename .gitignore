@@ -38,6 +38,7 @@ scolarships-bolivia-firebase-adminsdk-fbsvc-0b19e0a995.json
 !.vscode/extensions.json
 
 # dotenv environment variable files
+firebase-key.json
 .env
 .env.development.local
 .env.test.local
